@@ -23,6 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Get initial session on app load
     supabase.auth.getSession().then(({ data: { session } }) => {
+        console.log("initial session:", !!session);
       setSession(session);
       setLoading(false);
     });
@@ -30,6 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for login/logout events in real time
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
+         console.log("auth state changed:", _event, !!session);
         setSession(session);
       }
     );
