@@ -3,90 +3,159 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Image,
 } from "react-native";
-import {Link,useRouter} from "expo-router"
-import {SafeAreaView} from "react-native-safe-area-context"
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { supabase } from "../../lib/supabase";
+import { signupSchema, type SignupForm } from "../../validations/auth.validation";
 
-export default function signup(){
-    const router = useRouter()
-    const handleSignup = ()=>{
-        router.replace("/(protected)")
+export default function Signup() {
+  const router = useRouter();
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<SignupForm>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: { fullName: "", email: "", password: "" },
+  });
+
+  const onSubmit = async (data: SignupForm) => {
+    const { error } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+      options: { data: { full_name: data.fullName } },
+    });
+
+    if (error) {
+      alert(error.message);
+      return;
     }
-    return (
+
+    alert("Account created! Please check your email to verify your account.");
+    router.replace("/(public)/login");
+  };
+
+  return (
     <SafeAreaView className="flex-1 bg-white">
-      {/* KeyboardAvoidingView prevents the keyboard from hiding our inputs.
-        Behavior 'padding' is usually best for iOS.
-      */}
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="flex-1"
       >
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} className="px-8">
-          
+        <ScrollView
+          contentContainerStyle={{
+            flexGrow: 1,
+            paddingHorizontal: 32,
+            paddingVertical: 40,
+          }}
+          keyboardShouldPersistTaps="handled"
+        >
           <Image
             source={require("../../assets/images/logo.png")}
-            className="w-32 h-32 mx-auto mb-6"
+            className="w-32 h-32 mx-auto mb-6 rounded-2xl"
             resizeMode="contain"
           />
-          {/* Header Section */}
-          <View className="mt-12 mb-10">
+
+          <View className="mb-10">
             <Text className="text-4xl font-bold text-slate-900">Create Account</Text>
             <Text className="text-slate-500 mt-2">Join us and start your journey</Text>
           </View>
 
-          {/* Form Section */}
-          <View className="gap-y-4">
-            <View>
-              <Text className="text-slate-700 font-semibold mb-2 ml-1">Full Name</Text>
-              <TextInput 
-                placeholder="John Doe" 
-                className="bg-slate-50 border border-slate-200 p-4 rounded-2xl text-lg"
-              />
-            </View>
-
-            <View>
-              <Text className="text-slate-700 font-semibold mb-2 ml-1">Email</Text>
-              <TextInput 
-                placeholder="email@example.com" 
-                keyboardType="email-address"
-                autoCapitalize="none"
-                className="bg-slate-50 border border-slate-200 p-4 rounded-2xl text-lg"
-              />
-            </View>
-
-            <View>
-              <Text className="text-slate-700 font-semibold mb-2 ml-1">Password</Text>
-              <TextInput 
-                placeholder="••••••••" 
-                secureTextEntry 
-                className="bg-slate-50 border border-slate-200 p-4 rounded-2xl text-lg"
-              />
-            </View>
+          {/* Full Name */}
+          <View className="mb-4">
+            <Text className="text-slate-700 font-semibold mb-2 ml-1">Full Name</Text>
+            <Controller
+              control={control}
+              name="fullName"
+              render={({ field: { onChange, value } }) => (
+                <TextInput
+                  placeholder="John Doe"
+                  placeholderTextColor="#94a3b8"
+                  textAlignVertical="center"
+                  value={value}
+                  onChangeText={onChange}
+                  className="bg-slate-50 border border-slate-200 h-14 px-4 rounded-2xl text-lg text-slate-900"
+                />
+              )}
+            />
+            {errors.fullName && (
+              <Text className="text-red-500 text-sm mt-1 ml-1">{errors.fullName.message}</Text>
+            )}
           </View>
 
-          {/* Action Button */}
-          <TouchableOpacity 
-            onPress={handleSignup}
+          {/* Email */}
+          <View className="mb-4">
+            <Text className="text-slate-700 font-semibold mb-2 ml-1">Email</Text>
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { onChange, value } }) => (
+                <TextInput
+                  placeholder="email@example.com"
+                  placeholderTextColor="#94a3b8"
+                  textAlignVertical="center"
+                  value={value}
+                  onChangeText={onChange}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  className="bg-slate-50 border border-slate-200 h-14 px-4 rounded-2xl text-lg text-slate-900"
+                />
+              )}
+            />
+            {errors.email && (
+              <Text className="text-red-500 text-sm mt-1 ml-1">{errors.email.message}</Text>
+            )}
+          </View>
+
+          {/* Password */}
+          <View className="mb-4">
+            <Text className="text-slate-700 font-semibold mb-2 ml-1">Password</Text>
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, value } }) => (
+                <TextInput
+                  placeholder="••••••••"
+                  placeholderTextColor="#94a3b8"
+                  textAlignVertical="center"
+                  value={value}
+                  onChangeText={onChange}
+                  secureTextEntry
+                  className="bg-slate-50 border border-slate-200 h-14 px-4 rounded-2xl text-lg text-slate-900"
+                />
+              )}
+            />
+            {errors.password && (
+              <Text className="text-red-500 text-sm mt-1 ml-1">{errors.password.message}</Text>
+            )}
+          </View>
+
+          <TouchableOpacity
+            onPress={handleSubmit(onSubmit)}
+            disabled={isSubmitting}
             activeOpacity={0.8}
-            className="bg-blue-600 p-5 rounded-2xl mt-10 shadow-lg shadow-blue-200"
+            className="bg-blue-600 p-5 rounded-2xl mt-6 shadow-lg shadow-blue-200"
           >
-            <Text className="text-white text-center font-bold text-lg">Create Account</Text>
+            {isSubmitting ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text className="text-white text-center font-bold text-lg">Create Account</Text>
+            )}
           </TouchableOpacity>
 
-          {/* Footer */}
-          <View className="flex-row justify-center mt-auto mb-8 py-4">
+          <View className="flex-row justify-center mt-8 pb-4">
             <Text className="text-slate-500">Already have an account? </Text>
-            <Link href="/(public)/login" asChild>
-              <TouchableOpacity>
-                <Text className="text-blue-600 font-bold">Sign In</Text>
-              </TouchableOpacity>
-            </Link>
+            <TouchableOpacity onPress={() => router.replace("/(public)/login")}>
+              <Text className="text-blue-600 font-bold">Sign In</Text>
+            </TouchableOpacity>
           </View>
-
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
