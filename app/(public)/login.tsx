@@ -4,13 +4,14 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { useEffect } from "react";
+import { useAuth } from "../../context/authContext";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "../../lib/supabase";
@@ -18,6 +19,7 @@ import { loginSchema, type LoginForm } from "../../validations/auth.validation";
 
 export default function Login() {
   const router = useRouter();
+  const { session } = useAuth();
   const {
     control,
     handleSubmit,
@@ -28,106 +30,195 @@ export default function Login() {
   });
 
   const onSubmit = async (data: LoginForm) => {
-    console.log("attempting login...");
-    const {data: authData, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email: data.email,
       password: data.password,
     });
-    console.log("login result:", authData, error);
-    if (error) {
-      alert(error.message);
-    }
-    // No manual navigation — AuthContext listener handles redirect
+    if (error) alert(error.message);
   };
 
+  useEffect(() => {
+    if (session) {
+      router.replace("/");
+    }
+  }, [session]);
+
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#0A0A0F" }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1"
+        style={{ flex: 1 }}
       >
         <ScrollView
           contentContainerStyle={{
             flexGrow: 1,
             justifyContent: "center",
-            paddingHorizontal: 32,
+            paddingHorizontal: 28,
           }}
           keyboardShouldPersistTaps="handled"
         >
-          <Image
-            source={require("../../assets/images/logo.png")}
-            className="w-32 h-32 mx-auto mb-6 rounded-2xl"
-            resizeMode="contain"
-          />
-
-          <View className="mb-10">
-            <Text className="text-4xl font-bold text-slate-900">Welcome Back</Text>
-            <Text className="text-slate-500 mt-2">Login to Continue</Text>
+          {/* Logo Mark */}
+          <View style={{ alignItems: "center", marginBottom: 48 }}>
+            <Text
+              style={{
+                fontSize: 32,
+                fontWeight: "800",
+                color: "#FFFFFF",
+                letterSpacing: -1,
+              }}
+            >
+              PayNext
+            </Text>
+            <Text style={{ color: "#6B7280", marginTop: 6, fontSize: 15 }}>
+              Your AI-powered skill coach
+            </Text>
           </View>
 
-          {/* Email */}
-          <View className="mb-4">
-            <Text className="text-slate-700 font-semibold mb-2 ml-1">Email</Text>
-            <Controller
-              control={control}
-              name="email"
-              render={({ field: { onChange, value } }) => (
-                <TextInput
-                  placeholder="email@example.com"
-                  placeholderTextColor="#94a3b8"
-                  textAlignVertical="center"
-                  value={value}
-                  onChangeText={onChange}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  className="bg-slate-50 border border-slate-200 h-14 px-4 rounded-2xl text-lg text-slate-900"
-                />
-              )}
-            />
-            {errors.email && (
-              <Text className="text-red-500 text-sm mt-1 ml-1">{errors.email.message}</Text>
-            )}
-          </View>
-
-          {/* Password */}
-          <View className="mb-2">
-            <Text className="text-slate-700 font-semibold mb-2 ml-1">Password</Text>
-            <Controller
-              control={control}
-              name="password"
-              render={({ field: { onChange, value } }) => (
-                <TextInput
-                  placeholder="••••••••"
-                  placeholderTextColor="#94a3b8"
-                  textAlignVertical="center"
-                  value={value}
-                  onChangeText={onChange}
-                  secureTextEntry
-                  className="bg-slate-50 border border-slate-200 h-14 px-4 rounded-2xl text-lg text-slate-900"
-                />
-              )}
-            />
-            {errors.password && (
-              <Text className="text-red-500 text-sm mt-1 ml-1">{errors.password.message}</Text>
-            )}
-          </View>
-
-          <TouchableOpacity
-            onPress={handleSubmit(onSubmit)}
-            disabled={isSubmitting}
-            className="bg-blue-600 p-5 rounded-2xl mt-8 shadow-lg shadow-blue-200"
+          {/* Card */}
+          <View
+            style={{
+              backgroundColor: "#131318",
+              borderRadius: 24,
+              padding: 24,
+              borderWidth: 1,
+              borderColor: "#1E1E2E",
+            }}
           >
-            {isSubmitting ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text className="text-white text-center font-bold text-lg">Sign In</Text>
-            )}
-          </TouchableOpacity>
+            <Text
+              style={{
+                fontSize: 22,
+                fontWeight: "700",
+                color: "#FFFFFF",
+                marginBottom: 4,
+              }}
+            >
+              Welcome back
+            </Text>
+            <Text style={{ color: "#6B7280", marginBottom: 28, fontSize: 14 }}>
+              Sign in to continue your journey
+            </Text>
 
-          <View className="flex-row justify-center mt-8">
-            <Text className="text-slate-400">Don't Have an Account? </Text>
+            {/* Email */}
+            <View style={{ marginBottom: 16 }}>
+              <Text
+                style={{
+                  color: "#9CA3AF",
+                  fontSize: 13,
+                  fontWeight: "600",
+                  marginBottom: 8,
+                  letterSpacing: 0.5,
+                }}
+              >
+                EMAIL
+              </Text>
+              <Controller
+                control={control}
+                name="email"
+                render={({ field: { onChange, value } }) => (
+                  <TextInput
+                    placeholder="you@example.com"
+                    placeholderTextColor="#374151"
+                    value={value}
+                    onChangeText={onChange}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    style={{
+                      backgroundColor: "#0A0A0F",
+                      borderWidth: 1,
+                      borderColor: errors.email ? "#EF4444" : "#1E1E2E",
+                      borderRadius: 14,
+                      padding: 16,
+                      color: "#FFFFFF",
+                      fontSize: 16,
+                    }}
+                  />
+                )}
+              />
+              {errors.email && (
+                <Text style={{ color: "#EF4444", fontSize: 12, marginTop: 6 }}>
+                  {errors.email.message}
+                </Text>
+              )}
+            </View>
+
+            {/* Password */}
+            <View style={{ marginBottom: 28 }}>
+              <Text
+                style={{
+                  color: "#9CA3AF",
+                  fontSize: 13,
+                  fontWeight: "600",
+                  marginBottom: 8,
+                  letterSpacing: 0.5,
+                }}
+              >
+                PASSWORD
+              </Text>
+              <Controller
+                control={control}
+                name="password"
+                render={({ field: { onChange, value } }) => (
+                  <TextInput
+                    placeholder="••••••••"
+                    placeholderTextColor="#374151"
+                    value={value}
+                    onChangeText={onChange}
+                    secureTextEntry
+                    style={{
+                      backgroundColor: "#0A0A0F",
+                      borderWidth: 1,
+                      borderColor: errors.password ? "#EF4444" : "#1E1E2E",
+                      borderRadius: 14,
+                      padding: 16,
+                      color: "#FFFFFF",
+                      fontSize: 16,
+                    }}
+                  />
+                )}
+              />
+              {errors.password && (
+                <Text style={{ color: "#EF4444", fontSize: 12, marginTop: 6 }}>
+                  {errors.password.message}
+                </Text>
+              )}
+            </View>
+
+            {/* Button */}
+            <TouchableOpacity
+              onPress={handleSubmit(onSubmit)}
+              disabled={isSubmitting}
+              style={{
+                backgroundColor: "#6C63FF",
+                borderRadius: 14,
+                padding: 18,
+                alignItems: "center",
+                shadowColor: "#6C63FF",
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: 0.35,
+                shadowRadius: 12,
+              }}
+            >
+              {isSubmitting ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 16 }}>
+                  Sign In
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* Footer */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "center",
+              marginTop: 28,
+            }}
+          >
+            <Text style={{ color: "#6B7280" }}>Don't have an account? </Text>
             <TouchableOpacity onPress={() => router.replace("/(public)/signup")}>
-              <Text className="text-blue-600 font-bold">Sign Up</Text>
+              <Text style={{ color: "#6C63FF", fontWeight: "700" }}>Sign Up</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

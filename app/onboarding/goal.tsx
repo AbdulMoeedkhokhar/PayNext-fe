@@ -14,6 +14,7 @@ import { useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { setGoal, resetOnboarding, setOnboardingComplete } from "../../store/slices/onboardingSlice";
 import { supabase } from "../../lib/supabase";
+import { generateAndSaveTasks } from "../../services/taskService";
 
 export default function GoalScreen() {
   const router = useRouter();
@@ -28,23 +29,37 @@ export default function GoalScreen() {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { error } = await supabase.from("user_skills").insert({
-    user_id: user?.id,
-    skill: onboarding.skill,
-    level: onboarding.level,
-    daily_minutes: onboarding.dailyMinutes,
-    goal: value.trim(),
-  });
+  const { data: skillData, error } = await supabase
+    .from("user_skills")
+    .insert({
+      user_id: user?.id,
+      skill: onboarding.skill,
+      level: onboarding.level,
+      daily_minutes: onboarding.dailyMinutes,
+      goal: value.trim(),
+    })
+    .select()
+    .single();
 
-  setLoading(false);
-
-  if (error) {
+  if (error || !skillData) {
+    setLoading(false);
     alert("Something went wrong. Please try again.");
     return;
   }
 
+  // Generate first tasks immediately
+  await generateAndSaveTasks(user!.id, skillData.id);
+
+  // Initialize streak
+  await supabase.from("streaks").insert({
+    user_id: user?.id,
+    current_streak: 0,
+    last_activity_date: null,
+  });
+
+  setLoading(false);
   dispatch(setGoal(value.trim()));
-  dispatch(setOnboardingComplete(true)); // ← set BEFORE navigating
+  dispatch(setOnboardingComplete(true));
   dispatch(resetOnboarding());
   router.replace("/(protected)");
 };
